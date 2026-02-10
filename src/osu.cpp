@@ -7,7 +7,14 @@ int paw_r, paw_g, paw_b, paw_a;
 int paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a;
 double scale;
 bool is_mouse, is_left_handed, is_enable_toggle_smoke;
-sf::Sprite bg, up, left, right, device, smoke, wave;
+struct Graphics{
+    sf::Texture bgTex, upTex, leftTex, rightTex, deviceTex, smokeTex, waveTex;
+    sf::Sprite bg, up, left, right, device, smoke, wave;
+
+    Graphics() : bg(bgTex), up(upTex), left(leftTex), right(rightTex), device(deviceTex), smoke(smokeTex), wave(waveTex){}
+};
+
+Graphics gfx;
 
 int key_state = 0;
 
@@ -73,25 +80,25 @@ bool init() {
     }
 
     // importing sprites
-    up.setTexture(data::load_texture("img/osu/up.png"));
-    left.setTexture(data::load_texture("img/osu/left.png"));
-    right.setTexture(data::load_texture("img/osu/right.png"));
-    wave.setTexture(data::load_texture("img/osu/wave.png"));
+    data::load_texture(gfx.upTex, gfx.up, "img/osu/up.png");
+    data::load_texture(gfx.leftTex, gfx.left, "img/osu/left.png");
+    data::load_texture(gfx.rightTex, gfx.right, "img/osu/right.png");
+    data::load_texture(gfx.waveTex, gfx.wave, "img/osu/wave.png");
     if (is_mouse) {
-        bg.setTexture(data::load_texture("img/osu/mousebg.png"));
-        device.setTexture(data::load_texture("img/osu/mouse.png"), true);
+        data::load_texture(gfx.bgTex, gfx.bg, "img/osu/mousebg.png");
+        data::load_texture(gfx.deviceTex, gfx.device, "img/osu/mouse.png");
     } else {
-        bg.setTexture(data::load_texture("img/osu/tabletbg.png"));
-        device.setTexture(data::load_texture("img/osu/tablet.png"), true);
+        data::load_texture(gfx.bgTex, gfx.bg, "img/osu/tabletbg.png");
+        data::load_texture(gfx.deviceTex, gfx.device, "img/osu/tablet.png");
     }
-    smoke.setTexture(data::load_texture("img/osu/smoke.png"));
-    device.setScale(scale, scale);
+    data::load_texture(gfx.smokeTex, gfx.smoke, "img/osu/smoke.png");
+    gfx.device.setScale(sf::Vector2f(scale, scale));
 
     return true;
 }
 
 void draw() {
-    window.draw(bg);
+    window.draw(gfx.bg);
 
     // initializing pss and pss2 (kuvster's magic)
     Json::Value paw_draw_info = data::cfg["mousePaw"];
@@ -164,15 +171,15 @@ void draw() {
     pss2.push_back(pss[36] + dx);
     pss2.push_back(pss[37] + dy);
 
-    device.setPosition(mpos0 + dx + offset_x, mpos1 + dy + offset_y);
+    gfx.device.setPosition(sf::Vector2f(mpos0 + dx + offset_x, mpos1 + dy + offset_y));
 
     // drawing mouse
     if (is_mouse) {
-        window.draw(device);
+        window.draw(gfx.device);
     }
 
     // drawing arms
-    sf::VertexArray fill(sf::TriangleStrip, 26);
+    sf::VertexArray fill(sf::PrimitiveType::TriangleStrip, 26);
     for (int i = 0; i < 26; i += 2) {
         fill[i].position = sf::Vector2f(pss2[i], pss2[i + 1]);
         fill[i + 1].position = sf::Vector2f(pss2[52 - i - 2], pss2[52 - i - 1]);
@@ -183,11 +190,11 @@ void draw() {
 
     // drawing first arm arc
     int shad = paw_edge_a / 3;
-    sf::VertexArray edge(sf::TriangleStrip, 52);
+    sf::VertexArray edge(sf::PrimitiveType::TriangleStrip, 52);
     double width = 7;
     sf::CircleShape circ(width / 2);
     circ.setFillColor(sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, shad));
-    circ.setPosition(pss2[0] - width / 2, pss2[1] - width / 2);
+    circ.setPosition(sf::Vector2f(pss2[0] - width / 2, pss2[1] - width / 2));
     window.draw(circ);
     for (int i = 0; i < 50; i += 2) {
         double vec0 = pss2[i] - pss2[i + 2];
@@ -208,15 +215,15 @@ void draw() {
     edge[51].color = sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, shad);
     window.draw(edge);
     circ.setRadius(width / 2);
-    circ.setPosition(pss2[50] - width / 2, pss2[51] - width / 2);
+    circ.setPosition(sf::Vector2f(pss2[50] - width / 2, pss2[51] - width / 2));
     window.draw(circ);
 
     // drawing second arm arc
-    sf::VertexArray edge2(sf::TriangleStrip, 52);
+    sf::VertexArray edge2(sf::PrimitiveType::TriangleStrip, 52);
     width = 6;
     sf::CircleShape circ2(width / 2);
     circ2.setFillColor(sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a));
-    circ2.setPosition(pss2[0] - width / 2, pss2[1] - width / 2);
+    circ2.setPosition(sf::Vector2f(pss2[0] - width / 2, pss2[1] - width / 2));
     window.draw(circ2);
     for (int i = 0; i < 50; i += 2) {
         vec0 = pss2[i] - pss2[i + 2];
@@ -237,7 +244,7 @@ void draw() {
     edge2[51].color = sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a);
     window.draw(edge2);
     circ2.setRadius(width / 2);
-    circ2.setPosition(pss2[50] - width / 2, pss2[51] - width / 2);
+    circ2.setPosition(sf::Vector2f(pss2[50] - width / 2, pss2[51] - width / 2));
     window.draw(circ2);
 
     // drawing keypresses
@@ -297,43 +304,43 @@ void draw() {
 
     if (!left_key_state && !right_key_state && !wave_key_state) {
         key_state = 0;
-        window.draw(up);
+        window.draw(gfx.up);
     }
 
     if (key_state == 1) {
         if ((clock() - std::max(timer_right_key, timer_wave_key)) / CLOCKS_PER_SEC > BONGO_KEYPRESS_THRESHOLD) {
             if (!is_left_handed) {
-                window.draw(left);
+                window.draw(gfx.left);
             } else {
-                window.draw(right);
+                window.draw(gfx.right);
             }
             timer_left_key = clock();
         } else {
-            window.draw(up);
+            window.draw(gfx.up);
         }
     } else if (key_state == 2) {
         if ((clock() - std::max(timer_left_key, timer_wave_key)) / CLOCKS_PER_SEC > BONGO_KEYPRESS_THRESHOLD) {
             if (!is_left_handed) {
-                window.draw(right);
+                window.draw(gfx.right);
             } else {
-                window.draw(left);
+                window.draw(gfx.left);
             }
             timer_right_key = clock();
         } else {
-            window.draw(up);
+            window.draw(gfx.up);
         }
     } else if (key_state == 3) {
         if ((clock() - std::max(timer_left_key, timer_right_key)) / CLOCKS_PER_SEC > BONGO_KEYPRESS_THRESHOLD) {
-            window.draw(wave);
+            window.draw(gfx.wave);
             timer_wave_key = clock();
         } else {
-            window.draw(up);
+            window.draw(gfx.up);
         }
     }
 
     // drawing tablet
     if (!is_mouse) {
-        window.draw(device);
+        window.draw(gfx.device);
     }
     
     // draw smoke
@@ -361,7 +368,7 @@ void draw() {
     }
 
     if (is_toggle_smoke) {
-        window.draw(smoke);
+        window.draw(gfx.smoke);
     }
 }
 }; // namespace osu

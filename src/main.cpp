@@ -12,7 +12,7 @@ int main(int argc, char ** argv) {
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 #endif
 
-    window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
+    window.create(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Bongo Cat for osu!", sf::Style::Titlebar | sf::Style::Close);
     window.setFramerateLimit(MAX_FRAMERATE);
 
     // loading configs
@@ -29,16 +29,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     bool is_show_input_debug = false;
 
     while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            switch (event.type) {
-            case sf::Event::Closed:
+        while (const std::optional event = window.pollEvent()) {
+            if (event->is<sf::Event::Closed>()) {
                 window.close();
                 break;
-
-            case sf::Event::KeyPressed:
+            } else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 // get reload config prompt
-                if (event.key.code == sf::Keyboard::R && event.key.control) {
+                if (keyPressed->code == sf::Keyboard::Key::R && keyPressed->control) {
                     if (!is_reload) {
                         while (!data::init()) {
                             continue;
@@ -49,12 +46,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
                 }
 
                 // toggle joystick debug panel
-                if (event.key.code == sf::Keyboard::D && event.key.control) {
+                if (keyPressed->code == sf::Keyboard::Key::D && keyPressed->control) {
                     is_show_input_debug = !is_show_input_debug;
                     break;
                 }
-
-            default:
+            } else {
                 is_reload = false;
             }
         }
@@ -83,6 +79,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             break;
         case 5:
             custom::draw();
+            break;
         }
 
         if (is_show_input_debug) {

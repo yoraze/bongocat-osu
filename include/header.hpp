@@ -29,6 +29,8 @@ void error_msg(std::string error, std::string title);
 bool init();
 
 sf::Texture &load_texture(std::string path);
+
+void load_texture(sf::Texture &tx, sf::Sprite &sp, std::string path);
 }; // namespace data
 
 namespace input {

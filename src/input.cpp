@@ -32,7 +32,7 @@ std::string debugBitMessage;
 
 sf::RectangleShape debugBackground;
 sf::Font debugFont;
-sf::Text debugText;
+sf::Text debugText(debugFont);
 
 
 enum JoystickInputMapRange {
@@ -94,10 +94,10 @@ bool init() {
     INPUT_KEY_TABLE[186] = (int)sf::Keyboard::Key::Semicolon;
     INPUT_KEY_TABLE[188] = (int)sf::Keyboard::Key::Comma;
     INPUT_KEY_TABLE[190] = (int)sf::Keyboard::Key::Period;
-    INPUT_KEY_TABLE[222] = (int)sf::Keyboard::Key::Quote;
+    INPUT_KEY_TABLE[222] = (int)sf::Keyboard::Key::Hyphen;
     INPUT_KEY_TABLE[191] = (int)sf::Keyboard::Key::Slash;
     INPUT_KEY_TABLE[220] = (int)sf::Keyboard::Key::Backslash;
-    INPUT_KEY_TABLE[192] = (int)sf::Keyboard::Key::Tilde;
+    INPUT_KEY_TABLE[192] = (int)sf::Keyboard::Key::Grave;
     INPUT_KEY_TABLE[187] = (int)sf::Keyboard::Key::Equal;
     INPUT_KEY_TABLE[189] = (int)sf::Keyboard::Key::Hyphen;
     INPUT_KEY_TABLE[32] = (int)sf::Keyboard::Key::Space;
@@ -119,7 +119,7 @@ bool init() {
     INPUT_KEY_TABLE[38] = (int)sf::Keyboard::Key::Up;
     INPUT_KEY_TABLE[40] = (int)sf::Keyboard::Key::Down;
     INPUT_KEY_TABLE[19] = (int)sf::Keyboard::Key::Pause;
-    INPUT_KEY_TABLE[189] = (int)sf::Keyboard::Key::Dash;
+    INPUT_KEY_TABLE[189] = (int)sf::Keyboard::Key::Hyphen;
 
     is_letterbox = data::cfg["resolution"]["letterboxing"].asBool();
     osu_x = data::cfg["resolution"]["width"].asInt();
@@ -160,7 +160,7 @@ bool init() {
 #endif
 
     // loading font
-    if (!debugFont.loadFromFile("font/RobotoMono-Bold.ttf")) {
+    if (!debugFont.openFromFile("font/RobotoMono-Bold.ttf")) {
         data::error_msg("Cannot find the font : RobotoMono-Bold.ttf", "Error loading font");
         return false;
     }
@@ -172,7 +172,7 @@ bool init() {
     debugText.setFont(debugFont);
     debugText.setCharacterSize(14);
     debugText.setFillColor(sf::Color::White);
-    debugText.setPosition(10.0f, 4.0f);
+    debugText.setPosition(sf::Vector2f(10.0f, 4.0f));
     debugText.setString(debugMessage);
 
     return true;
@@ -181,7 +181,7 @@ bool init() {
 sf::Keyboard::Key ascii_to_key(int key_code) {
     if (key_code < 0 || key_code >= TOTAl_INPUT_TABLE_SIZE) {
         // out of range
-        return sf::Keyboard::Unknown;
+        return sf::Keyboard::Key::Unknown;
     } else {
         return (sf::Keyboard::Key)(INPUT_KEY_TABLE[key_code]);
     }
@@ -206,11 +206,11 @@ bool is_pressed_fallback(int key_code) {
 
 bool is_pressed(int key_code) {
     if (key_code == 16) {
-        return sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)
-            || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
+        return sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift);
     } else if (key_code == 17) {
-        return sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)
-            || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl);
+        return sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl);
     } else {
         sf::Keyboard::Key selected = ascii_to_key(key_code);
         if (selected != sf::Keyboard::Key::Unknown) {
@@ -239,72 +239,72 @@ bool is_joystick_pressed(int key_code) {
 
         switch (key_code) {
             case LS_Left:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::X);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::X);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case LS_Right:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::X);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::X);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case LS_Up:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Y);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::Y);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case LS_Down:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Y);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::Y);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case RS_Left:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::U);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::U);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case RS_Right:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::U);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::U);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case RS_Up:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::V);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::V);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case RS_Down:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::V);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::V);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case DPad_Left:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::PovX);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::PovX);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case DPad_Right:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::PovX);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::PovX);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case DPad_Up:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::PovY);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::PovY);
                 return axis <= -JOYSTICK_AXIS_DEADZONE;
             break;
 
             case DPad_Down:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::PovY);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::PovY);
                 return axis >= JOYSTICK_AXIS_DEADZONE;
             break;
 
             case LTrigger:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Z);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::Z);
                 return axis >= JOYSTICK_TRIGGER_DEADZONE;
             break;
 
             case RTrigger:
-                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::R);
+                axis = sf::Joystick::getAxisPosition(id, sf::Joystick::Axis::R);
                 return axis >= JOYSTICK_TRIGGER_DEADZONE;
             break;
 
@@ -557,16 +557,16 @@ void drawDebugPanel() {
     float left_trigger_axis;
     float right_trigger_axis;
 
-    leftstick_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::X);
-    leftstick_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Y);
-    rightstick_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::U);
-    rightstick_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::V);
+    leftstick_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::X);
+    leftstick_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::Y);
+    rightstick_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::U);
+    rightstick_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::V);
     
-    dpad_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::PovX);
-    dpad_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::PovY);
+    dpad_axis.x = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::PovX);
+    dpad_axis.y = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::PovY);
 
-    left_trigger_axis = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Z); 
-    right_trigger_axis = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::R); 
+    left_trigger_axis = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::Z); 
+    right_trigger_axis = sf::Joystick::getAxisPosition(joy_id, sf::Joystick::Axis::R); 
 
     result << "LStick : " << "( " << leftstick_axis.x << "," << leftstick_axis.y << " )" << std::endl;
     result << "RStick : " << "( " << rightstick_axis.x << "," << rightstick_axis.y << " )" << std::endl;

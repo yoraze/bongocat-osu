@@ -4,12 +4,12 @@ namespace custom {
 struct key {
     Json::Value key_value;
     Json::Value joy_value;
+    sf::Texture texture;
     sf::Sprite sprite;
     bool status;
     double timer;
 
-    key(Json::Value _key_value) {
-        sprite = sf::Sprite();
+    key(Json::Value _key_value) : sprite(texture){
         if (_key_value.isMember("keyCodes") && _key_value["keyCodes"].isArray()) {
             key_value = _key_value["keyCodes"];
         } else {
@@ -17,8 +17,9 @@ struct key {
             throw;
         }
         if (_key_value.isMember("image") && _key_value["image"].isString()) {
-            sprite = sf::Sprite();
-            sprite.setTexture(data::load_texture(_key_value["image"].asString()));
+            if(!texture.loadFromFile(_key_value["image"].asString())){
+                data::error_msg("Cannot find key file for: " + _key_value["image"].asString(), "Error importing images");
+            }
         } else {
             data::error_msg("Custom image path is not set correctly", "Error reading configs");
             throw;
@@ -60,10 +61,11 @@ struct key {
 
 struct key_container {
     std::vector<key> keys;
+    sf::Texture default_texture;
     sf::Sprite default_sprite;
     int key_state;
 
-    key_container(Json::Value key_container_value) {
+    key_container(Json::Value key_container_value) : default_sprite(default_texture){
         key_state = -1;
         if (key_container_value.isObject()) {
             if (!key_container_value.isMember("defaultImage")
@@ -73,8 +75,9 @@ struct key_container {
                 data::error_msg("Key container's object error", "Error reading configs");
                 throw;
             } else {
-                default_sprite = sf::Sprite();
-                default_sprite.setTexture(data::load_texture(key_container_value["defaultImage"].asString()));
+                if(!default_texture.loadFromFile(key_container_value["defaultImage"].asString())){
+                    data::error_msg("Cannot find file " + key_container_value["defaultImage"].asString(), "Error importing images");
+                }
                 for (Json::Value &child_key : key_container_value["keys"]) {
                     keys.push_back(key(child_key));
                 }
@@ -121,7 +124,21 @@ struct key_container {
 };
 
 std::vector<key_container> key_containers;
-sf::Sprite bg, mouse;
+
+struct Graphics
+{
+    sf::Texture bgTex;
+    sf::Texture mouseTex;
+
+    sf::Sprite bg;
+    sf::Sprite mouse;
+
+    Graphics() : bg(bgTex),
+      mouse(mouseTex)
+    {}
+};
+
+Graphics gfx;
 
 bool is_mouse, is_mouse_on_top;
 int offset_x, offset_y, scale;
@@ -140,7 +157,11 @@ bool init() {
             data::error_msg("Custom background not found", "Error reading config");
             return false;
         }
-        bg.setTexture(data::load_texture(custom["background"].asString()));
+
+        if(!gfx.bgTex.loadFromFile(custom["background"].asString())){
+            data::error_msg("Cannot find file " + custom["background"].asString(), "Error importing images");
+            return false;
+        }
 
         is_mouse = custom["mouse"].asBool();
         if (is_mouse) {
@@ -164,7 +185,11 @@ bool init() {
                 data::error_msg("Mouse image not found", "Error reading config");
                 return false;
             }
-            mouse.setTexture(data::load_texture(custom["mouseImage"].asString()));
+
+            if(!gfx.mouseTex.loadFromFile(custom["mouseImage"].asString())){
+                data::error_msg("Cannot find file " + custom["mouseImage"].asString(), "Error importing images");
+                return false;
+            }
         }
     } catch (...) {
         return false;
@@ -173,7 +198,7 @@ bool init() {
 }
 
 void draw() {
-    window.draw(bg);
+    window.draw(gfx.bg);
 
     if (is_mouse) {
         // initializing pss and pss2 (kuvster's magic)
@@ -247,15 +272,15 @@ void draw() {
         pss2.push_back(pss[36] + dx);
         pss2.push_back(pss[37] + dy);
 
-        mouse.setPosition(mpos0 + dx + offset_x, mpos1 + dy + offset_y);
+        gfx.mouse.setPosition(sf::Vector2f(mpos0 + dx + offset_x, mpos1 + dy + offset_y));
 
         // drawing mouse on top
         if (is_mouse_on_top) {
-            window.draw(mouse);
+            window.draw(gfx.mouse);
         }
 
         // drawing arms
-        sf::VertexArray fill(sf::TriangleStrip, 26);
+        sf::VertexArray fill(sf::PrimitiveType::TriangleStrip, 26);
         for (int i = 0; i < 26; i += 2) {
             fill[i].position = sf::Vector2f(pss2[i], pss2[i + 1]);
             fill[i + 1].position = sf::Vector2f(pss2[52 - i - 2], pss2[52 - i - 1]);
@@ -266,11 +291,11 @@ void draw() {
 
         // drawing first arm arc
         int shad = paw_edge_a / 3;
-        sf::VertexArray edge(sf::TriangleStrip, 52);
+        sf::VertexArray edge(sf::PrimitiveType::TriangleStrip, 52);
         double width = 7;
         sf::CircleShape circ(width / 2);
         circ.setFillColor(sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, shad));
-        circ.setPosition(pss2[0] - width / 2, pss2[1] - width / 2);
+        circ.setPosition(sf::Vector2f(pss2[0] - width / 2, pss2[1] - width / 2));
         window.draw(circ);
         for (int i = 0; i < 50; i += 2) {
             double vec0 = pss2[i] - pss2[i + 2];
@@ -291,15 +316,15 @@ void draw() {
         edge[51].color = sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, shad);
         window.draw(edge);
         circ.setRadius(width / 2);
-        circ.setPosition(pss2[50] - width / 2, pss2[51] - width / 2);
+        circ.setPosition(sf::Vector2f(pss2[50] - width / 2, pss2[51] - width / 2));
         window.draw(circ);
 
         // drawing second arm arc
-        sf::VertexArray edge2(sf::TriangleStrip, 52);
+        sf::VertexArray edge2(sf::PrimitiveType::TriangleStrip, 52);
         width = 6;
         sf::CircleShape circ2(width / 2);
         circ2.setFillColor(sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a));
-        circ2.setPosition(pss2[0] - width / 2, pss2[1] - width / 2);
+        circ2.setPosition(sf::Vector2f(pss2[0] - width / 2, pss2[1] - width / 2));
         window.draw(circ2);
         for (int i = 0; i < 50; i += 2) {
             vec0 = pss2[i] - pss2[i + 2];
@@ -320,7 +345,7 @@ void draw() {
         edge2[51].color = sf::Color(paw_edge_r, paw_edge_g, paw_edge_b, paw_edge_a);
         window.draw(edge2);
         circ2.setRadius(width / 2);
-        circ2.setPosition(pss2[50] - width / 2, pss2[51] - width / 2);
+        circ2.setPosition(sf::Vector2f(pss2[50] - width / 2, pss2[51] - width / 2));
         window.draw(circ2);
     }
 
@@ -330,7 +355,7 @@ void draw() {
 
     // drawing mouse at the bottom
     if (is_mouse && !is_mouse_on_top) {
-        window.draw(mouse);
+        window.draw(gfx.mouse);
     }
 }
 }; // namespace custom

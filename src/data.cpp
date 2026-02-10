@@ -163,6 +163,7 @@ bool init() {
         create_config();
         std::ifstream cfg_file("config.json", std::ifstream::binary);
         if (!cfg_file.good()) {
+            error_msg("Could not create config file", "Config error");
             break;
         }
         std::string cfg_string((std::istreambuf_iterator<char>(cfg_file)), std::istreambuf_iterator<char>()), error;
@@ -206,5 +207,13 @@ sf::Texture &load_texture(std::string path) {
         }
     }
     return img_holder[path];
+}
+
+void load_texture(sf::Texture &tx, sf::Sprite &sp, std::string path) {
+    while (!tx.loadFromFile(path)) {
+        error_msg("Cannot find file " + path, "Error importing images");
+    }
+
+    sp = sf::Sprite(tx);
 }
 }; // namespace data

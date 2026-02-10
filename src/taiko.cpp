@@ -2,7 +2,24 @@
 
 namespace taiko {
 Json::Value rim_key_value[2], centre_key_value[2];
-sf::Sprite bg, up[2], rim[2], centre[2];
+struct Graphics{
+    sf::Texture bg_tex;
+    sf::Texture up_tex[3], rim_tex[2], centre_tex[2];
+    sf::Sprite bg;
+    sf::Sprite up[2] = {
+        sf::Sprite(up_tex[0]), sf::Sprite(up_tex[1])
+    };
+    sf::Sprite rim[2] = {
+        sf::Sprite(rim_tex[0]), sf::Sprite(rim_tex[1])
+    };
+    sf::Sprite centre[2] = {
+        sf::Sprite(centre_tex[0]), sf::Sprite(centre_tex[1])
+    };
+
+    Graphics() : bg(bg_tex){}
+};
+
+Graphics gfx;
 
 int key_state[2] = {0, 0};
 bool rim_key_state[2] = {false, false};
@@ -42,19 +59,19 @@ bool init() {
     }
 
     // importing sprites
-    bg.setTexture(data::load_texture("img/taiko/bg.png"));
-    up[0].setTexture(data::load_texture("img/taiko/leftup.png"));
-    rim[0].setTexture(data::load_texture("img/taiko/leftrim.png"));
-    centre[0].setTexture(data::load_texture("img/taiko/leftcentre.png"));
-    up[1].setTexture(data::load_texture("img/taiko/rightup.png"));
-    rim[1].setTexture(data::load_texture("img/taiko/rightrim.png"));
-    centre[1].setTexture(data::load_texture("img/taiko/rightcentre.png"));
+    data::load_texture(gfx.bg_tex, gfx.bg, "img/taiko/bg.png");
+    data::load_texture(gfx.up_tex[0], gfx.up[0], "img/taiko/leftup.png");
+    data::load_texture(gfx.rim_tex[0], gfx.rim[0], "img/taiko/leftrim.png");
+    data::load_texture(gfx.centre_tex[0], gfx.centre[0], "img/taiko/leftcentre.png");
+    data::load_texture(gfx.up_tex[1], gfx.up[1], "img/taiko/rightup.png");
+    data::load_texture(gfx.rim_tex[1], gfx.rim[1], "img/taiko/rightrim.png");
+    data::load_texture(gfx.centre_tex[1], gfx.centre[1], "img/taiko/rightcentre.png");
 
     return true;
 }
 
 void draw() {
-    window.draw(bg);
+    window.draw(gfx.bg);
 
     // 0 for left side, 1 for right side
     for (int i = 0; i < 2; i++) {
@@ -92,21 +109,21 @@ void draw() {
 
         if (!rim_key_state[i] && !centre_key_state[i]) {
             key_state[i] = 0;
-            window.draw(up[i]);
+            window.draw(gfx.up[i]);
         }
         if (key_state[i] == 1) {
             if ((clock() - timer_centre_key[i]) / CLOCKS_PER_SEC > BONGO_KEYPRESS_THRESHOLD) {
-                window.draw(rim[i]);
+                window.draw(gfx.rim[i]);
                 timer_rim_key[i] = clock();
             } else {
-                window.draw(up[i]);
+                window.draw(gfx.up[i]);
             }
         } else if (key_state[i] == 2) {
             if ((clock() - timer_rim_key[i]) / CLOCKS_PER_SEC > BONGO_KEYPRESS_THRESHOLD) {
-                window.draw(centre[i]);
+                window.draw(gfx.centre[i]);
                 timer_centre_key[i] = clock();
             } else {
-                window.draw(up[i]);
+                window.draw(gfx.up[i]);
             }
         }
     }
